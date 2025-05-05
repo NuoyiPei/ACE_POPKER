@@ -11,7 +11,7 @@ POSITION_MAP = {
 }
 
 def extract_features(hand: List[Card], community: List[Card], position: str, pot: int, bet: int) -> List[float]:
-    """Extract features for ML model input"""
+    
     features = {
         "is_suited": int(hand[0].suit == hand[1].suit),
         "rank_gap": abs(hand[0].rank.value - hand[1].rank.value),

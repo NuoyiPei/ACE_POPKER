@@ -10,7 +10,7 @@ class AIAction:
     action: str
     amount: int
 
-@dataclass
+# @dataclass
 class Player:
     name: str
     chips: int
@@ -38,10 +38,12 @@ class Player:
         return amount
 
 class PokerGame:
-    def __init__(self, player_name: str):
+    def __init__(self, num_players=9):
+        self.num_players = num_players
+        self.current_stage = "preflop"
         self.deck = Deck()
-        self.player = Player(player_name, position="SB")
-        self.ai = Player("AI", position="BB")
+        self.players = []
+        # self.ai = Player("BB", position="BB")
         self.community_cards: List[Card] = []
         self.pot = 0
         self.current_bet = 0
@@ -51,23 +53,26 @@ class PokerGame:
         self.history: List[HandRecord] = []
         self.ai_actions: List[AIAction] = []
         self.positions = ["UTG", "MP", "CO", "BTN", "SB", "BB"]
+        self.dealer_position = 0
 
     def start_new_hand(self) -> None:
         self.deck.reset()
-        self.player.clear_hand()
-        self.ai.clear_hand()
+        for player in self.players:
+            player.clear_hand()
+        # self.ai.clear_hand()
         self.community_cards = []
         self.pot = 0
         self.current_bet = 0
         self.ai_actions = []
 
         for _ in range(2):
-            self.player.add_card(self.deck.deal())
-            self.ai.add_card(self.deck.deal())
-
-        self.pot += self.player.bet(self.small_blind)
-        self.pot += self.ai.bet(self.big_blind)
-        self.current_bet = self.big_blind
+            for player in self.players:
+                player.add_card(self.deck.deal())
+        print("Dealt hands:", player.hand)
+        if len(self.players) >= 2:
+            self.pot += self.players[0].bet(self.small_blind)
+            self.pot += self.players[1].bet(self.big_blind)
+            self.current_bet = self.big_blind
 
     def deal_community_cards(self, count: int = 3) -> None:
         for _ in range(count):
@@ -88,18 +93,30 @@ class PokerGame:
         elif action == "check":
             bet_amount = 0
         return True, bet_amount
+    
 
-    def ai_action(self) -> Tuple[str, int]:
-        action, amount = self.ai_agent.make_decision(self, self.ai, self.ai.position)
+
+
+    def ai_action(self, player=None) -> Tuple[str, int]:
+        player = player or self.ai
+        action, amount = self.ai_agent.make_decision(self, player, player.position)
+        
+        
+        if action == "call":
+            amount = self.current_bet
+        elif action == "raise":
+            
+            amount = max(amount, self.current_bet * 2)
+        
+        
         if action == "fold":
-            self.ai.is_active = False
+            player.is_active = False
         elif action == "call":
-            self.pot += self.ai.bet(self.current_bet)
+            self.pot += player.bet(amount)
         elif action == "raise":
             self.current_bet = amount
-            self.pot += self.ai.bet(amount)
-        elif action == "check":
-            amount = 0
+            self.pot += player.bet(amount)
+        
         return action, amount
 
     def simulate_other_players_actions(self):

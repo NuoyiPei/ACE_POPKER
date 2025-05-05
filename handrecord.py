@@ -11,4 +11,4 @@ class HandRecord:
     result: float
     position: str
     pot_size: int
-    bet_amount: int 
+    bet_amount: int

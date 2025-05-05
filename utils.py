@@ -1,29 +1,59 @@
-from typing import List
-from cards import Card
+from enum import Enum
 
-def get_hand_rank(hand: List[Card]) -> str:
-    """
-    评估手牌等级
-    返回: 手牌等级描述
-    """
-    # TODO: 实现手牌评估逻辑
-    return "高牌"
+class Suit(Enum):
+    HEARTS = 'h'
+    DIAMONDS = 'd'
+    CLUBS = 'c'
+    SPADES = 's'
 
-def suggest_action(win_rate: float, pot_odds: float, ev: float) -> str:
-    """
-    根据当前情况给出行动建议
-    """
-    if win_rate > 0.7:
-        return "🔥 加注 - 你有很大优势！"
-    elif win_rate > 0.5:
-        return "✅ 跟注 - 形势不错"
-    elif pot_odds > 4 and ev > 0:
-        return "🔄 跟注 - 赔率合适"
+class Rank(Enum):
+    TWO = '2'
+    THREE = '3'
+    FOUR = '4'
+    FIVE = '5'
+    SIX = '6'
+    SEVEN = '7'
+    EIGHT = '8'
+    NINE = '9'
+    TEN = 'T'
+    JACK = 'J'
+    QUEEN = 'Q'
+    KING = 'K'
+    ACE = 'A'
+
+# Convert hand to readable string
+def hand_to_text(hand):
+    
+    if not hand:
+        return "--"
+    return " ".join(f"{card.rank.value}{card.suit.value}" for card in hand)
+
+# Format chip value
+def format_chips(chips):
+    
+    return f"${chips:,.0f}"
+
+# Calculate win probability (mock)
+def calculate_win_probability(hand, community_cards, active_players=2, position=""):
+    
+    if not hand or len(hand) < 2:
+        return "Unknown", 0.0
+    
+    # Dummy logic: give higher win rate for high cards or pairs
+    ranks = [card.rank.value for card in hand]
+    if ranks[0] == ranks[1]:
+        return "Pair", 75.0
+    elif 'A' in ranks or 'K' in ranks:
+        return "High Card", 60.0
     else:
-        return "❌ 弃牌 - 形势不利"
+        return "Low Card", 40.0
 
-def format_currency(amount: int) -> str:
-    """
-    格式化金额显示
-    """
-    return f"${amount:,}" 
+# Recommend action based on win rate and situation
+def suggest_action(win_prob, current_bet, pot, chips, position_index):
+    
+    if win_prob > 70:
+        return "raise", int(min(pot * 0.5, chips)), "Strong hand, aggressive play"
+    elif win_prob > 50:
+        return "call", int(current_bet), "Decent hand, can call"
+    else:
+        return "fold", 0, "Weak hand, better fold"
